@@ -9,6 +9,8 @@ import userRoutes from "./routes/user.routes.js";
 import roadmapRoutes from "./routes/roadmap.routes.js";
 import resourceRoutes from "./routes/resource.routes.js";
 import quizRoutes from "./routes/quiz.routes.js";
+import performanceRoutes from "./routes/performance.routes.js";
+import progressRoutes from "./routes/progress.routes.js";
 import { swaggerUi, specs } from "./swagger.js";
 
 // Load environment variables
@@ -40,6 +42,8 @@ app.use("/api/user", userRoutes);
 app.use("/api/roadmaps", roadmapRoutes);
 app.use("/api/resources", resourceRoutes);
 app.use("/api/quizzes", quizRoutes);
+app.use("/api/performance", performanceRoutes);
+app.use("/api/progress", progressRoutes);
 
 // Health Check
 app.get("/", (req, res) => {

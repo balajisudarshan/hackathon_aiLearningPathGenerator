@@ -61,6 +61,14 @@ export const resourceApi = {
   incrementViews: (id) => request('PATCH', `/resources/${id}`, { views: 1 }),
 };
 
+export const performanceApi = {
+  getPerformance: () => request('GET', '/performance'),
+};
+
+export const progressApi = {
+  getProgress: () => request('GET', '/progress'),
+};
+
 export const quizApi = {
   generate: (payload) => request('POST', '/quizzes/generate', payload),
   getAll: (page = 1, limit = 10) => request('GET', `/quizzes?page=${page}&limit=${limit}`),

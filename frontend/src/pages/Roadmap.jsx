@@ -330,19 +330,42 @@ const RoadmapGraph = ({ roadmap, layout, selectedNodeId, onNodeClick, onToggleCo
                   strokeWidth={isSection ? 2 : 1.5}
                 />
 
-                {/* Completed checkmark */}
-                {isDone && (
-                  <circle cx={node.w - 14} cy={14} r={8}
-                    fill={isSection ? '#fff' : '#22c55e'} />
+                {/* Checkbox for Topic Nodes */}
+                {!isSection && (
+                  <g 
+                    className="hover:scale-110 transition-transform cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleComplete(node.sectionId, node.topicId || node.id, !isDone);
+                    }}
+                  >
+                    <circle 
+                      cx={node.w - 14} 
+                      cy={14} 
+                      r={9} 
+                      fill={isDone ? '#22c55e' : '#ffffff'} 
+                      stroke={isDone ? '#16a34a' : '#9ca3af'}
+                      strokeWidth="1.5"
+                    />
+                    {isDone ? (
+                      <text x={node.w - 14} y={17.5} textAnchor="middle" fontSize="10" fill="#ffffff" fontWeight="bold">✓</text>
+                    ) : (
+                      <circle cx={node.w - 14} cy={14} r={3} fill="#9ca3af" opacity="0.4" />
+                    )}
+                  </g>
                 )}
-                {isDone && (
-                  <text x={node.w - 14} y={18} textAnchor="middle"
-                    fontSize="9" fill={isSection ? '#22c55e' : '#fff'} fontWeight="bold">✓</text>
+
+                {/* Section completed badge */}
+                {isSection && isDone && (
+                  <g>
+                    <circle cx={node.w - 14} cy={14} r={9} fill="#ffffff" />
+                    <text x={node.w - 14} y={17.5} textAnchor="middle" fontSize="10" fill="#22c55e" fontWeight="bold">✓</text>
+                  </g>
                 )}
 
                 {/* Label */}
                 <text
-                  x={node.w / 2} y={node.h / 2 + 1}
+                  x={node.w / 2 - (isSection ? 0 : 4)} y={node.h / 2 + 1}
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fontSize={isSection ? 12 : 11}
@@ -352,7 +375,7 @@ const RoadmapGraph = ({ roadmap, layout, selectedNodeId, onNodeClick, onToggleCo
                     : (isDone ? '#15803d' : isSelected ? '#4c1d95' : '#374151')
                   }
                 >
-                  {node.label.length > 18 ? node.label.substring(0, 17) + '…' : node.label}
+                  {node.label.length > 17 ? node.label.substring(0, 16) + '…' : node.label}
                 </text>
               </g>
             );
@@ -400,14 +423,17 @@ const RoadmapListView = ({ roadmap, onNodeClick, onToggleComplete }) => {
                   return (
                     <div key={tid} className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#fafafa] dark:hover:bg-[#161616] transition-colors">
                       <button
-                        onClick={() => onToggleComplete(section.id || section._id, tid, !topic.isCompleted)}
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleComplete(sid, tid, !topic.isCompleted);
+                        }}
+                        className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-all cursor-pointer ${
                           topic.isCompleted
-                            ? 'bg-green-500 border-green-500 text-white'
-                            : 'border-[#d1d5db] dark:border-[#333] hover:border-[#5438dc]'
+                            ? 'bg-emerald-500 border-emerald-500 text-white'
+                            : 'border-gray-300 dark:border-[#444] bg-white dark:bg-[#1a1a1a] hover:border-[#5438dc]'
                         }`}
                       >
-                        {topic.isCompleted && <Check size={11} />}
+                        {topic.isCompleted && <Check size={12} strokeWidth={3} />}
                       </button>
                       <button
                         onClick={() => onNodeClick({ ...topic, id: tid, topicId: tid, sectionId: section.id || section._id, type: 'topic' })}
@@ -446,15 +472,20 @@ const TopicPanel = ({ node, onClose, onToggleComplete }) => {
 
         {/* Complete toggle */}
         <button
-          onClick={() => onToggleComplete(node.sectionId, node.topicId || node.id, !node.completed)}
-          className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all ${
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleComplete(node.sectionId, node.topicId || node.id, !node.completed);
+          }}
+          className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
             node.completed
-              ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800'
-              : 'bg-[#5438dc]/10 dark:bg-[#5438dc]/20 text-[#5438dc] border border-[#5438dc]/20 hover:bg-[#5438dc]/20'
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
+              : 'bg-[#fafafa] dark:bg-[#141414] border-[#e5e7eb] dark:border-[#222] text-[#333] dark:text-[#ccc] hover:border-[#5438dc]/40'
           }`}
         >
-          <Check size={13} />
-          {node.completed ? 'Completed ✓' : 'Mark as Complete'}
+          <Check size={14} className={node.completed ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#888]'} />
+          <span>{node.completed ? 'Completed ✓' : 'Mark as Complete'}</span>
         </button>
 
         {/* Resources */}
@@ -583,18 +614,45 @@ const Roadmap = ({ user, initialRoadmapId, onNavigateToChat }) => {
   };
 
   const handleToggleComplete = async (sectionId, topicId, isCompleted) => {
-    if (!activeRoadmap) return;
+    const targetRoadmapId = activeRoadmap?.id || activeRoadmap?._id;
+    if (!targetRoadmapId || !topicId) return;
+
+    // 1. Optimistic UI update for instant zero-lag feedback
+    setActiveRoadmap(prev => {
+      if (!prev || !prev.sections) return prev;
+      const nextSections = prev.sections.map(sec => ({
+        ...sec,
+        topics: sec.topics.map(tp => {
+          const tid = tp.id || tp._id;
+          if (tid?.toString() === topicId?.toString()) {
+            return { ...tp, isCompleted };
+          }
+          return tp;
+        })
+      }));
+      return { ...prev, sections: nextSections };
+    });
+
+    if (selectedNode && (selectedNode.topicId?.toString() === topicId?.toString() || selectedNode.id?.toString() === topicId?.toString())) {
+      setSelectedNode(prev => ({ ...prev, completed: isCompleted }));
+    }
+
+    // 2. Persist to Backend API
     try {
-      const data = await roadmapApi.updateProgress(activeRoadmap.id, sectionId, topicId, isCompleted);
-      if (data.success) {
-        setActiveRoadmap(data.roadmap);
-        // Update the node in place if selected
-        if (selectedNode?.topicId === topicId) {
+      const data = await roadmapApi.updateProgress(targetRoadmapId, sectionId || '', topicId, isCompleted);
+      if (data.success && data.roadmap) {
+        const updated = data.roadmap;
+        setActiveRoadmap(updated);
+        
+        // Update roadmaps history list in left sidebar
+        setRoadmaps(prev => prev.map(r => (r.id === updated.id || r._id === updated._id) ? { ...r, ...updated } : r));
+
+        if (selectedNode && (selectedNode.topicId?.toString() === topicId?.toString() || selectedNode.id?.toString() === topicId?.toString())) {
           setSelectedNode(prev => ({ ...prev, completed: isCompleted }));
         }
       }
     } catch (err) {
-      console.error('Failed to update progress:', err);
+      console.error('Failed to update progress in backend:', err);
     }
   };
 

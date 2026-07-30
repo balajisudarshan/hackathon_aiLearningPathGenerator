@@ -20,7 +20,15 @@ const topicSchema = new mongoose.Schema(
     isCompleted: { type: Boolean, default: false },
     resources: [resourceSchema],
   },
-  { _id: true }
+  {
+    _id: true,
+    toJSON: {
+      transform: (doc, ret) => {
+        if (ret._id) ret.id = ret._id.toString();
+        return ret;
+      },
+    },
+  }
 );
 
 const sectionSchema = new mongoose.Schema(
@@ -29,7 +37,15 @@ const sectionSchema = new mongoose.Schema(
     description: { type: String, required: true },
     topics: [topicSchema],
   },
-  { _id: true }
+  {
+    _id: true,
+    toJSON: {
+      transform: (doc, ret) => {
+        if (ret._id) ret.id = ret._id.toString();
+        return ret;
+      },
+    },
+  }
 );
 
 const roadmapSchema = new mongoose.Schema(
@@ -59,8 +75,7 @@ const roadmapSchema = new mongoose.Schema(
 // Virtual for formatted output (id mapping)
 roadmapSchema.set("toJSON", {
   transform: (doc, ret) => {
-    ret.id = ret._id.toString();
-    delete ret._id;
+    if (ret._id) ret.id = ret._id.toString();
     delete ret.__v;
     return ret;
   },

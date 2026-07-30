@@ -160,32 +160,40 @@ export const getRoadmapById = async (roadmapId, userId) => {
  * Update the progress (isCompleted) of a specific topic in a roadmap.
  */
 export const updateTopicProgress = async (roadmapId, sectionId, topicId, isCompleted, userId) => {
-  // We use the positional operator $[] to update the nested topic array
-  const roadmap = await Roadmap.findOneAndUpdate(
-    {
-      _id: roadmapId,
-      userId: userId,
-      "sections._id": sectionId,
-      "sections.topics._id": topicId,
-    },
-    {
-      $set: {
-        "sections.$[section].topics.$[topic].isCompleted": isCompleted,
-      },
-    },
-    {
-      arrayFilters: [{ "section._id": sectionId }, { "topic._id": topicId }],
-      new: true,
-    }
-  );
-
+  const roadmap = await Roadmap.findOne({ _id: roadmapId, userId });
   if (!roadmap) {
-    const error = new Error("Roadmap, section, or topic not found");
+    const error = new Error("Roadmap not found");
     error.statusCode = 404;
     throw error;
   }
 
-  // Check if all topics in all sections are completed to mark the entire roadmap as done
+  let found = false;
+  const targetIdStr = topicId ? topicId.toString().trim() : "";
+
+  // Search and update in-memory for calculation
+  for (const section of roadmap.sections) {
+    for (const topic of section.topics) {
+      const tId = topic._id ? topic._id.toString() : (topic.id || "");
+      const tTitle = topic.title ? topic.title.trim().toLowerCase() : "";
+
+      if (
+        (tId && tId === targetIdStr) ||
+        (tTitle && targetIdStr && tTitle === targetIdStr.toLowerCase())
+      ) {
+        topic.isCompleted = Boolean(isCompleted);
+        found = true;
+        break;
+      }
+    }
+    if (found) break;
+  }
+
+  if (!found) {
+    const error = new Error("Topic not found in roadmap");
+    error.statusCode = 404;
+    throw error;
+  }
+
   let allDone = true;
   for (const section of roadmap.sections) {
     for (const topic of section.topics) {
@@ -196,13 +204,22 @@ export const updateTopicProgress = async (roadmapId, sectionId, topicId, isCompl
     }
     if (!allDone) break;
   }
+  roadmap.isCompleted = allDone;
 
-  if (roadmap.isCompleted !== allDone) {
-    roadmap.isCompleted = allDone;
-    await roadmap.save();
-  }
+  // Use findOneAndUpdate to explicitly bypass mongoose change tracking bugs
+  // and force the entire sections array to be replaced with the updated one
+  const updatedRoadmap = await Roadmap.findOneAndUpdate(
+    { _id: roadmapId, userId },
+    { 
+      $set: { 
+        sections: roadmap.sections,
+        isCompleted: allDone
+      } 
+    },
+    { new: true }
+  );
 
-  return roadmap;
+  return updatedRoadmap;
 };
 
 /**

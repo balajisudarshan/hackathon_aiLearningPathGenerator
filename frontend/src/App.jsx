@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import AIAssistant from './pages/AIAssistant';
 import Roadmap from './pages/Roadmap';
 import Materials from './pages/Materials';
+import Performance from './pages/Performance';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -34,9 +35,9 @@ const App = () => {
     }
   }, [user]);
 
-  // Navigate to a specific roadmap from chat
+  // Navigate to a specific roadmap from chat or performance
   const navigateToRoadmap = (roadmapId) => {
-    setActiveRoadmapId(roadmapId);
+    if (roadmapId) setActiveRoadmapId(roadmapId);
     setActiveTab('Learning Path');
   };
 
@@ -100,7 +101,7 @@ const App = () => {
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           <div className="max-w-6xl mx-auto h-full">
             {activeTab === 'Dashboard' ? (
-              <Dashboard user={user} onOpenOnboarding={() => setShowOnboarding(true)} />
+              <Dashboard user={user} onOpenOnboarding={() => setShowOnboarding(true)} onNavigateToRoadmap={navigateToRoadmap} />
             ) : activeTab === 'AI Assistant' ? (
               <AIAssistant user={user} onNavigateToRoadmap={navigateToRoadmap} />
             ) : activeTab === 'Learning Path' ? (
@@ -113,6 +114,8 @@ const App = () => {
               <Materials user={user} />
             ) : activeTab === 'Quizzes' ? (
               <Quizzes user={user} />
+            ) : activeTab === 'Performance' ? (
+              <Performance user={user} onNavigateToRoadmap={navigateToRoadmap} />
             ) : (
               <div className="flex h-64 items-center justify-center rounded-xl border border-[#ebebeb] dark:border-[#1e1e1e] bg-white dark:bg-[#141414]">
                 <div className="text-center">

@@ -91,10 +91,10 @@ export const updateProgressController = async (req, res) => {
     const { id } = req.params;
     const { sectionId, topicId, isCompleted } = req.body;
 
-    if (!sectionId || !topicId || typeof isCompleted !== "boolean") {
+    if (!topicId || typeof isCompleted !== "boolean") {
       return res.status(400).json({
         success: false,
-        message: "sectionId, topicId, and isCompleted (boolean) are required",
+        message: "topicId and isCompleted (boolean) are required",
       });
     }
 

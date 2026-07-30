@@ -35,3 +35,19 @@ export const chatApi = {
   deleteChat: (chatId) => request('DELETE', `/chat/${chatId}`),
   updateChat: (chatId, payload) => request('PATCH', `/chat/${chatId}`, payload),
 };
+
+export const userApi = {
+  getProfile: () => request('GET', '/user/profile'),
+  updateProfile: (payload) => request('PUT', '/user/profile', payload),
+  skipOnboarding: () => request('POST', '/user/profile/skip-onboarding'),
+  extractProfile: (text) => request('POST', '/user/profile/extract', { text }),
+};
+
+export const roadmapApi = {
+  generate: (topic) => request('POST', '/roadmaps/generate', { topic }),
+  getAll: () => request('GET', '/roadmaps'),
+  getById: (id) => request('GET', `/roadmaps/${id}`),
+  updateProgress: (id, sectionId, topicId, isCompleted) =>
+    request('PATCH', `/roadmaps/${id}/progress`, { sectionId, topicId, isCompleted }),
+  delete: (id) => request('DELETE', `/roadmaps/${id}`),
+};

@@ -44,7 +44,10 @@ export const updateUserProfile = async (userId, updates) => {
   if (lastName !== undefined) profileUpdate.lastName = lastName;
   if (avatarUrl !== undefined) profileUpdate.avatarUrl = avatarUrl;
 
-  const preferencesUpdate = {};
+  const preferencesUpdate = {
+    "preferences.onboardingCompleted": true,
+    "preferences.onboardingSkipped": false,
+  };
   if (currentRole !== undefined) preferencesUpdate["preferences.currentRole"] = currentRole;
   if (targetRole !== undefined) preferencesUpdate["preferences.targetRole"] = targetRole;
   if (experienceLevel !== undefined) preferencesUpdate["preferences.experienceLevel"] = experienceLevel;

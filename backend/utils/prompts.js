@@ -170,7 +170,10 @@ Return ONLY valid JSON matching this exact schema:
             {
               "title": "Name of the resource (e.g., 'Official React Docs: Hooks', 'Fireship: 100 seconds of Code')",
               "type": "video|article|course|documentation|book",
-              "url": "Valid URL to the resource, or a very specific Youtube/Google search URL if exact link is unknown"
+              "searchQuery": {
+                "technology": "Main technology name (e.g., react)",
+                "tags": ["array", "of", "topic", "tags"]
+              }
             }
           ]
         }

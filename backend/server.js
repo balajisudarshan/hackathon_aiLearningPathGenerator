@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import roadmapRoutes from "./routes/roadmap.routes.js";
+import resourceRoutes from "./routes/resource.routes.js";
 import { swaggerUi, specs } from "./swagger.js";
 
 // Load environment variables
@@ -36,6 +37,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/roadmaps", roadmapRoutes);
+app.use("/api/resources", resourceRoutes);
 
 // Health Check
 app.get("/", (req, res) => {

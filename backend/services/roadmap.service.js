@@ -2,6 +2,7 @@ import Roadmap from "../models/Roadmap.js";
 import User from "../models/User.js";
 import { getGroqClient, GROQ_MODEL } from "../config/groq.js";
 import { buildRoadmapGenerationPrompt } from "../utils/prompts.js";
+import { getRecommendedResources } from "./resource.service.js";
 
 /**
  * Generate a new AI roadmap for a specific topic, tailored to user preferences.
@@ -44,7 +45,48 @@ export const generateRoadmap = async (userId, topic) => {
     throw error;
   }
 
-  // 3. Save to database
+  // 3. Map AI-generated search queries to actual DB resources
+  if (roadmapData.sections && Array.isArray(roadmapData.sections)) {
+    for (const section of roadmapData.sections) {
+      if (section.topics && Array.isArray(section.topics)) {
+        for (const topicObj of section.topics) {
+          if (topicObj.resources && Array.isArray(topicObj.resources)) {
+            const mappedResources = [];
+            for (const aiResource of topicObj.resources) {
+              if (aiResource.searchQuery) {
+                const { technology, tags } = aiResource.searchQuery;
+                const difficulty = roadmapData.level || "beginner";
+                
+                // Search MongoDB for matches
+                const dbResources = await getRecommendedResources(technology, tags, difficulty);
+                
+                // If we found matches in the DB, use the top 1
+                if (dbResources && dbResources.length > 0) {
+                  const matched = dbResources[0];
+                  mappedResources.push({
+                    title: matched.title,
+                    type: matched.type,
+                    url: matched.url
+                  });
+                } else {
+                  // Fallback if no DB resources exist for these tags:
+                  // We just use the AI generated title and let the frontend handle the empty URL
+                  mappedResources.push({
+                    title: aiResource.title || `Learn ${tags[0] || technology}`,
+                    type: aiResource.type || "article",
+                    url: "" 
+                  });
+                }
+              }
+            }
+            topicObj.resources = mappedResources; // Overwrite with actual mapped resources
+          }
+        }
+      }
+    }
+  }
+
+  // 4. Save to database
   const roadmap = await Roadmap.create({
     userId,
     title: roadmapData.title || `Learning Path: ${topic}`,

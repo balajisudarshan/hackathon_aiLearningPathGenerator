@@ -130,3 +130,57 @@ ${recentHistory}
 """
 `;
 };
+
+// ─── Roadmap Generation Prompts ─────────────────────────────────────────────
+
+/**
+ * Build a prompt to generate a highly structured learning roadmap.
+ * Uses Groq JSON mode.
+ * @param {string} topic - The topic to learn (e.g., "React.js", "Machine Learning")
+ * @param {object} preferences - User's learning preferences to tailor the curriculum
+ */
+export const buildRoadmapGenerationPrompt = (topic, preferences = {}) => {
+  const profileSummary = preferences.aiProfileSummary
+    ? `\nLEARNER PROFILE:\n${preferences.aiProfileSummary}`
+    : `\nLEARNER LEVEL: ${preferences.experienceLevel || "beginner"}`;
+
+  return `
+You are an expert curriculum designer and AI learning assistant.
+Create a highly structured, step-by-step learning roadmap for the following topic: "${topic}".
+
+${profileSummary}
+Tailor the roadmap's difficulty, pace, and recommended resources to perfectly match this learner's profile.
+
+Return ONLY valid JSON matching this exact schema:
+{
+  "title": "A catchy title for the roadmap (string)",
+  "topic": "${topic}",
+  "description": "A 2-3 sentence overview of what the learner will achieve (string)",
+  "level": "beginner|intermediate|advanced",
+  "estimatedWeeks": number,
+  "sections": [
+    {
+      "title": "Section Title (e.g., 'Week 1: Basics', 'Core Concepts')",
+      "description": "Short description of this section",
+      "topics": [
+        {
+          "title": "Specific topic to learn",
+          "description": "What they need to learn and why it matters",
+          "resources": [
+            {
+              "title": "Name of the resource (e.g., 'Official React Docs: Hooks', 'Fireship: 100 seconds of Code')",
+              "type": "video|article|course|documentation|book",
+              "url": "Valid URL to the resource, or a very specific Youtube/Google search URL if exact link is unknown"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+Ensure there are at least 3 sections, and each section has 3-5 topics. Each topic should have 1-2 resources.
+Return ONLY valid JSON.
+`;
+};
+

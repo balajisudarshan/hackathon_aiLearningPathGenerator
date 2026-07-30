@@ -108,12 +108,14 @@ export const sendMessageController = async (req, res) => {
   } catch (error) {
     console.error("Error in sendMessageController:", error);
 
-    // Handle Gemini quota / rate-limit errors cleanly
+    // Handle AI quota / rate-limit errors cleanly (Groq + Gemini)
     if (
       error.status === 429 ||
+      error.statusCode === 429 ||
       error.message?.includes("429") ||
       error.message?.includes("Too Many Requests") ||
-      error.message?.includes("quota")
+      error.message?.includes("quota") ||
+      error.message?.includes("rate_limit")
     ) {
       return res.status(429).json({
         success: false,

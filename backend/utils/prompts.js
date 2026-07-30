@@ -1,13 +1,11 @@
 /**
- * All Gemini prompt templates in one place.
- * Keep templates here to make them easy to iterate and tune.
+ * All AI prompt templates in one place.
  */
 
 /**
  * System instruction for the AI learning assistant.
- * Establishes persona, tone, and behaviour.
  */
-export const CHAT_SYSTEM_PROMPT = `You are an expert AI learning assistant specializing in personalized education and skill development. 
+export const CHAT_SYSTEM_PROMPT = `You are an expert AI learning assistant specializing in personalized education and skill development.
 Your role is to:
 - Answer questions clearly and concisely, adapting to the learner's level.
 - Provide examples, analogies, and step-by-step explanations where helpful.
@@ -18,7 +16,7 @@ Your role is to:
 - Keep answers focused and avoid overwhelming the learner with too much information at once.`;
 
 /**
- * Build a context-aware chat message to prefix to the conversation.
+ * Build a context-aware system prompt.
  * @param {string} topic - The learning topic or roadmap context.
  * @returns {string}
  */
@@ -30,14 +28,17 @@ The learner is currently studying: "${topic}". Keep your responses relevant to t
 };
 
 /**
- * Build the message history format expected by Gemini multi-turn chat.
- * Converts stored messages to the Gemini API shape.
- * @param {Array<{role: string, content: string}>} messages
- * @returns {Array<{role: string, parts: [{text: string}]}>}
+ * Convert stored messages to the OpenAI/Groq messages array format.
+ * @param {Array<{role: string, content: string}>} messages - Stored DB messages
+ * @param {string} systemPrompt - The system instruction text
+ * @returns {Array<{role: string, content: string}>}
  */
-export const buildGeminiHistory = (messages = []) => {
-  return messages.map((msg) => ({
-    role: msg.role === "assistant" ? "model" : "user",
-    parts: [{ text: msg.content }],
-  }));
+export const buildGroqMessages = (messages = [], systemPrompt = CHAT_SYSTEM_PROMPT) => {
+  return [
+    { role: "system", content: systemPrompt },
+    ...messages.map((msg) => ({
+      role: msg.role === "assistant" ? "assistant" : "user",
+      content: msg.content,
+    })),
+  ];
 };

@@ -5,14 +5,16 @@ import OnboardingModal from './components/OnboardingModal';
 import Dashboard from './pages/Dashboard';
 import AIAssistant from './pages/AIAssistant';
 import Roadmap from './pages/Roadmap';
+import Materials from './pages/Materials';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import { useAuth } from './context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 const App = () => {
-  const { user, loading, logout, refreshUser } = useAuth();
-  const [page, setPage] = useState('login'); // 'login' | 'register'
+  const { user, loading, logout, refreshUser, updateUser } = useAuth();
+  const [page, setPage] = useState('landing'); // 'landing' | 'login' | 'register'
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -46,11 +48,11 @@ const App = () => {
     );
   }
 
-  // Not logged in → show auth pages
+  // Not logged in → show landing or auth pages
   if (!user) {
-    return page === 'login'
-      ? <Login onLoginSuccess={() => {}} onGoToRegister={() => setPage('register')} />
-      : <Register onRegisterSuccess={() => {}} onGoToLogin={() => setPage('login')} />;
+    if (page === 'landing') return <Landing onLogin={() => setPage('login')} onRegister={() => setPage('register')} />;
+    if (page === 'login') return <Login onLoginSuccess={() => {}} onGoToRegister={() => setPage('register')} />;
+    if (page === 'register') return <Register onRegisterSuccess={() => {}} onGoToLogin={() => setPage('login')} />;
   }
 
   // Logged in → show dashboard
@@ -69,6 +71,9 @@ const App = () => {
         onClose={() => setShowOnboarding(false)}
         onComplete={(data) => {
           setShowOnboarding(false);
+          if (data?.user) {
+            updateUser(data.user);
+          }
           refreshUser();
         }}
         initialUser={user}
@@ -103,6 +108,8 @@ const App = () => {
                 initialRoadmapId={activeRoadmapId}
                 onNavigateToChat={() => setActiveTab('AI Assistant')}
               />
+            ) : activeTab === 'Materials' ? (
+              <Materials user={user} />
             ) : (
               <div className="flex h-64 items-center justify-center rounded-xl border border-[#ebebeb] dark:border-[#1e1e1e] bg-white dark:bg-[#141414]">
                 <div className="text-center">

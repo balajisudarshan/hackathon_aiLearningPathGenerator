@@ -51,3 +51,12 @@ export const roadmapApi = {
     request('PATCH', `/roadmaps/${id}/progress`, { sectionId, topicId, isCompleted }),
   delete: (id) => request('DELETE', `/roadmaps/${id}`),
 };
+
+export const resourceApi = {
+  search: (params) => {
+    const query = new URLSearchParams(params).toString();
+    return request('GET', `/resources?${query}`);
+  },
+  recommend: (payload) => request('POST', '/resources/recommend', payload),
+  incrementViews: (id) => request('PATCH', `/resources/${id}`, { views: 1 }),
+};

@@ -45,10 +45,9 @@ export const searchResources = async ({ query, technology, difficulty, page = 1,
 
 /**
  * Core matching logic for AI Roadmaps.
- * Maps AI generated tags to curated MongoDB resources.
+ * Maps AI generated tags to curated MongoDB resources, taking user preferences into account.
  */
-export const getRecommendedResources = async (technology, tags = [], difficulty = "all") => {
-  // If no tech is provided, return empty (safeguard)
+export const getRecommendedResources = async (technology, tags = [], difficulty = "all", learningStyle = "") => {
   if (!technology) return [];
 
   const filter = {
@@ -56,7 +55,6 @@ export const getRecommendedResources = async (technology, tags = [], difficulty 
   };
 
   if (tags && tags.length > 0) {
-    // Return resources that have AT LEAST ONE matching tag
     filter.tags = { $in: tags.map((t) => new RegExp(t, "i")) };
   }
 
@@ -64,12 +62,32 @@ export const getRecommendedResources = async (technology, tags = [], difficulty 
     filter.difficulty = { $in: [difficulty, "all"] };
   }
 
-  // Find the top 3 best matching resources
-  const resources = await Resource.find(filter)
-    .sort({ views: -1 }) // simple ranking by popularity for MVP
-    .limit(3);
+  // Find matches
+  let resources = await Resource.find(filter).limit(10); // Fetch a pool of matches
 
-  return resources;
+  // Custom sorting to prioritize user's learning style
+  if (learningStyle) {
+    resources.sort((a, b) => {
+      let scoreA = a.views;
+      let scoreB = b.views;
+
+      // Boost score if type matches learning style
+      if (learningStyle === "visual" && a.type === "video") scoreA += 10000;
+      if (learningStyle === "reading" && (a.type === "article" || a.type === "documentation" || a.type === "book")) scoreA += 10000;
+      if (learningStyle === "hands-on" && (a.type === "practice" || a.type === "github")) scoreA += 10000;
+
+      if (learningStyle === "visual" && b.type === "video") scoreB += 10000;
+      if (learningStyle === "reading" && (b.type === "article" || b.type === "documentation" || b.type === "book")) scoreB += 10000;
+      if (learningStyle === "hands-on" && (b.type === "practice" || b.type === "github")) scoreB += 10000;
+
+      return scoreB - scoreA;
+    });
+  } else {
+    // Default to views
+    resources.sort((a, b) => b.views - a.views);
+  }
+
+  return resources.slice(0, 3); // Return top 3
 };
 
 /**

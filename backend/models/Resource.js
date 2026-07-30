@@ -6,7 +6,7 @@ const resourceSchema = new mongoose.Schema(
     description: { type: String, required: true },
     type: {
       type: String,
-      enum: ["video", "article", "documentation", "course", "github", "practice"],
+      enum: ["video", "article", "documentation", "course", "github", "practice", "book"],
       required: true,
     },
     url: { type: String, required: true, unique: true },

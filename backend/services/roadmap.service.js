@@ -56,9 +56,10 @@ export const generateRoadmap = async (userId, topic) => {
               if (aiResource.searchQuery) {
                 const { technology, tags } = aiResource.searchQuery;
                 const difficulty = roadmapData.level || "beginner";
+                const learningStyle = preferences.learningStyle || "";
                 
                 // Search MongoDB for matches
-                const dbResources = await getRecommendedResources(technology, tags, difficulty);
+                const dbResources = await getRecommendedResources(technology, tags, difficulty, learningStyle);
                 
                 // If we found matches in the DB, use the top 1
                 if (dbResources && dbResources.length > 0) {
@@ -70,10 +71,31 @@ export const generateRoadmap = async (userId, topic) => {
                   });
                 } else {
                   // Fallback if no DB resources exist for these tags:
-                  // We just use the AI generated title and let the frontend handle the empty URL
+                  // Save the AI generated resource to the DB for future curation
+                  const aiTitle = aiResource.title || `Learn ${tags[0] || technology}`;
+                  const aiType = aiResource.type || "article";
+                  
+                  try {
+                    import("./resource.service.js").then(({ createResource }) => {
+                      createResource({
+                        title: aiTitle,
+                        description: `AI suggested resource for ${technology}`,
+                        type: aiType,
+                        url: "", // Empty URL for curation
+                        technology: technology,
+                        category: roadmapData.topic || "",
+                        tags: tags,
+                        difficulty: difficulty,
+                        isCurated: false
+                      }).catch(err => console.error("Error saving unmapped AI resource:", err.message));
+                    });
+                  } catch (e) {
+                     // ignore import errors here
+                  }
+                  
                   mappedResources.push({
-                    title: aiResource.title || `Learn ${tags[0] || technology}`,
-                    type: aiResource.type || "article",
+                    title: aiTitle,
+                    type: aiType,
                     url: "" 
                   });
                 }
@@ -101,13 +123,24 @@ export const generateRoadmap = async (userId, topic) => {
 };
 
 /**
- * Get all roadmaps for a user.
+ * Get all roadmaps for a user with pagination.
  */
-export const getUserRoadmaps = async (userId) => {
+export const getUserRoadmaps = async (userId, page = 1, limit = 10) => {
+  const skip = (page - 1) * limit;
   const roadmaps = await Roadmap.find({ userId })
     .select("title topic level estimatedWeeks isCompleted createdAt updatedAt")
-    .sort({ updatedAt: -1 });
-  return roadmaps;
+    .sort({ updatedAt: -1 })
+    .skip(skip)
+    .limit(parseInt(limit));
+    
+  const total = await Roadmap.countDocuments({ userId });
+
+  return {
+    roadmaps,
+    total,
+    page: parseInt(page),
+    totalPages: Math.ceil(total / limit),
+  };
 };
 
 /**

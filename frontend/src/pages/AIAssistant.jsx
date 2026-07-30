@@ -8,27 +8,52 @@ import {
   Bot,
   User,
   Loader2,
-  ChevronLeft
+  ChevronLeft,
+  Map,
+  ExternalLink
 } from 'lucide-react';
-import { chatApi } from '../services/api';
+import { chatApi, roadmapApi } from '../services/api';
 
 const SUGGESTED_PROMPTS = [
   "Explain Big O notation with a real-world analogy",
-  "Create a 7-day Python learning roadmap for beginners",
+  "Create a learning roadmap for Machine Learning",
   "What is the difference between SQL and NoSQL databases?",
-  "How do Async/Await and Promises work in JavaScript?"
+  "Create a roadmap for becoming a Full Stack Developer"
 ];
 
+// ─── Roadmap Link Button ────────────────────────────────────────────────────
+const RoadmapLinkButton = ({ roadmapId, onNavigate }) => (
+  <button
+    onClick={() => onNavigate && onNavigate(roadmapId)}
+    className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-[#5438dc] hover:bg-[#452bc4] text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
+  >
+    <Map size={12} />
+    View Roadmap →
+  </button>
+);
+
 // Helper to render basic markdown formatting (bold, code blocks, bullet points)
-const FormattedMessage = ({ content }) => {
+const FormattedMessage = ({ content, onNavigateToRoadmap }) => {
   if (!content) return null;
 
   // Split code blocks ```code```
   const parts = content.split(/(```[\s\S]*?```)/g);
 
+  // Extract roadmap IDs from text like [VIEW ROADMAP](roadmap:ID) or roadmap:ID
+  const roadmapIds = [];
+  const roadmapLinkRegex = /\[.*?\]\(roadmap:([a-zA-Z0-9]+)\)|roadmap:([a-zA-Z0-9]+)/g;
+  let m;
+  const cleanContent = content.replace(roadmapLinkRegex, (match, id1, id2) => {
+    const id = id1 || id2;
+    roadmapIds.push(id);
+    return ''; // Remove from text
+  });
+
+  const cleanParts = cleanContent.split(/(```[\s\S]*?```)/g);
+
   return (
     <div className="space-y-2 text-sm leading-relaxed">
-      {parts.map((part, index) => {
+      {cleanParts.map((part, index) => {
         if (part.startsWith('```') && part.endsWith('```')) {
           const firstLineEnd = part.indexOf('\n');
           const lang = firstLineEnd !== -1 ? part.substring(3, firstLineEnd).trim() : '';
@@ -81,6 +106,10 @@ const FormattedMessage = ({ content }) => {
           </div>
         );
       })}
+      {/* Roadmap navigation buttons */}
+      {roadmapIds.map((id, i) => (
+        <RoadmapLinkButton key={i} roadmapId={id} onNavigate={onNavigateToRoadmap} />
+      ))}
     </div>
   );
 };
@@ -96,7 +125,7 @@ const renderInlineBold = (text) => {
   });
 };
 
-const AIAssistant = ({ user }) => {
+const AIAssistant = ({ user, onNavigateToRoadmap }) => {
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -159,7 +188,7 @@ const AIAssistant = ({ user }) => {
     try {
       setSending(true);
       const data = await chatApi.createChat({
-        title: topicContext ? `Chat: ${topicContext.slice(0, 20)}...` : "New Session",
+        title: "New Session",
         topic: topicContext || ""
       });
       if (data.success && data.chat) {
@@ -174,6 +203,15 @@ const AIAssistant = ({ user }) => {
     } finally {
       setSending(false);
     }
+  };
+
+  // Detect if message is a roadmap request
+  const isRoadmapRequest = (text) => {
+    const lower = text.toLowerCase();
+    return (
+      (lower.includes('roadmap') || lower.includes('learning path') || lower.includes('study plan')) &&
+      (lower.includes('create') || lower.includes('generate') || lower.includes('make') || lower.includes('build') || lower.includes('give me'))
+    );
   };
 
   const handleSendMessage = async (textToSend = null) => {
@@ -202,7 +240,30 @@ const AIAssistant = ({ user }) => {
     try {
       const data = await chatApi.sendMessage(targetChatId, text);
       if (data.success && data.message) {
-        setMessages(prev => [...prev, data.message]);
+        let aiMessage = data.message;
+
+        // If roadmap was requested, auto-generate one and embed a link
+        if (isRoadmapRequest(text)) {
+          // Extract topic from user message
+          const topicMatch = text.match(/(?:for|about|on)\s+([^?.!]+)/i);
+          const topic = topicMatch ? topicMatch[1].trim() : text.replace(/(create|generate|make|build|give me|a|an)?\s*(roadmap|learning path|study plan)/gi, '').trim();
+
+          if (topic.length > 2) {
+            try {
+              const rmData = await roadmapApi.generate(topic);
+              if (rmData.success && rmData.roadmap) {
+                aiMessage = {
+                  ...aiMessage,
+                  content: aiMessage.content + `\n\n🗺️ I've generated your roadmap! [View Roadmap](roadmap:${rmData.roadmap.id})`
+                };
+              }
+            } catch (rmErr) {
+              console.warn('Auto roadmap generation failed:', rmErr.message);
+            }
+          }
+        }
+
+        setMessages(prev => [...prev, aiMessage]);
         if (data.title) {
           setChats(prev => prev.map(c => c.id === targetChatId ? { ...c, title: data.title } : c));
         }
@@ -392,7 +453,7 @@ const AIAssistant = ({ user }) => {
                       ? 'bg-[#5438dc] text-white rounded-tr-xs'
                       : 'bg-[#f5f5f5] dark:bg-[#141414] text-[#111] dark:text-[#e5e5e5] border border-[#ebebeb] dark:border-[#1e1e1e] rounded-tl-xs'
                   }`}>
-                    <FormattedMessage content={msg.content} />
+                    <FormattedMessage content={msg.content} onNavigateToRoadmap={onNavigateToRoadmap} />
                   </div>
                 </div>
               );

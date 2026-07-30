@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 import OnboardingModal from './components/OnboardingModal';
 import Dashboard from './pages/Dashboard';
 import AIAssistant from './pages/AIAssistant';
+import Roadmap from './pages/Roadmap';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import { useAuth } from './context/AuthContext';
@@ -15,6 +16,8 @@ const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [showOnboarding, setShowOnboarding] = useState(false);
+  // For chat → roadmap deep-link
+  const [activeRoadmapId, setActiveRoadmapId] = useState(null);
 
   // Auto-open onboarding if user has not completed or skipped it
   useEffect(() => {
@@ -27,6 +30,12 @@ const App = () => {
       }
     }
   }, [user]);
+
+  // Navigate to a specific roadmap from chat
+  const navigateToRoadmap = (roadmapId) => {
+    setActiveRoadmapId(roadmapId);
+    setActiveTab('Learning Path');
+  };
 
   // Session loading spinner
   if (loading) {
@@ -60,9 +69,6 @@ const App = () => {
         onClose={() => setShowOnboarding(false)}
         onComplete={(data) => {
           setShowOnboarding(false);
-          if (data?.user) {
-            updateUser(data.user);
-          }
           refreshUser();
         }}
         initialUser={user}
@@ -78,6 +84,8 @@ const App = () => {
               logout();
             } else {
               setActiveTab(tab);
+              // Reset roadmap deep-link when navigating away
+              if (tab !== 'Learning Path') setActiveRoadmapId(null);
               if (window.innerWidth < 1024) setIsSidebarOpen(false);
             }
           }}
@@ -88,7 +96,13 @@ const App = () => {
             {activeTab === 'Dashboard' ? (
               <Dashboard user={user} onOpenOnboarding={() => setShowOnboarding(true)} />
             ) : activeTab === 'AI Assistant' ? (
-              <AIAssistant user={user} />
+              <AIAssistant user={user} onNavigateToRoadmap={navigateToRoadmap} />
+            ) : activeTab === 'Learning Path' ? (
+              <Roadmap
+                user={user}
+                initialRoadmapId={activeRoadmapId}
+                onNavigateToChat={() => setActiveTab('AI Assistant')}
+              />
             ) : (
               <div className="flex h-64 items-center justify-center rounded-xl border border-[#ebebeb] dark:border-[#1e1e1e] bg-white dark:bg-[#141414]">
                 <div className="text-center">

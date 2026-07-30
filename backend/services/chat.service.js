@@ -13,7 +13,7 @@ const PASSIVE_EXTRACTION_INTERVAL = 10; // every 10 messages (5 exchanges)
 export const createChatSession = async (userId, { title, topic } = {}) => {
   const chat = await Chat.create({
     userId,
-    title: title || "New Chat",
+    title: title || "New Session",
     topic: topic || "",
     messages: [],
   });
@@ -112,11 +112,24 @@ export const sendMessage = async (chatId, userId, userMessage) => {
     "I could not generate a response. Please try again.";
 
   // 7. Persist both messages to DB
+  const isFirstMessage = chat.messages.length === 0;
   chat.messages.push({ role: "user", content: trimmedMessage });
   chat.messages.push({ role: "assistant", content: aiText });
+
+  // 8. Auto-title: after the very first exchange, generate a short relevant title
+  if (isFirstMessage) {
+    // Derive a concise title from the user's first message (max 6 words)
+    const words = trimmedMessage
+      .replace(/[^a-zA-Z0-9 ]/g, " ")
+      .split(/\s+/)
+      .filter(Boolean);
+    const rawTitle = words.slice(0, 6).join(" ");
+    chat.title = rawTitle.length > 0 ? rawTitle : "New Session";
+  }
+
   await chat.save();
 
-  // 8. Passive profile extraction — fire-and-forget every N messages
+  // 9. Passive profile extraction — fire-and-forget every N messages
   const totalMessages = chat.messages.length;
   if (totalMessages % PASSIVE_EXTRACTION_INTERVAL === 0) {
     // Non-blocking: don't await, don't block the response
@@ -149,7 +162,7 @@ export const clearChatHistory = async (chatId, userId) => {
   }
 
   chat.messages = [];
-  chat.title = "New Chat";
+  chat.title = "New Session";
   await chat.save();
 
   return { id: chat._id.toString(), title: chat.title };

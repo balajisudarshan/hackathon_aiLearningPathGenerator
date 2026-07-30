@@ -42,3 +42,12 @@ export const userApi = {
   skipOnboarding: () => request('POST', '/user/profile/skip-onboarding'),
   extractProfile: (text) => request('POST', '/user/profile/extract', { text }),
 };
+
+export const roadmapApi = {
+  generate: (topic) => request('POST', '/roadmaps/generate', { topic }),
+  getAll: () => request('GET', '/roadmaps'),
+  getById: (id) => request('GET', `/roadmaps/${id}`),
+  updateProgress: (id, sectionId, topicId, isCompleted) =>
+    request('PATCH', `/roadmaps/${id}/progress`, { sectionId, topicId, isCompleted }),
+  delete: (id) => request('DELETE', `/roadmaps/${id}`),
+};

@@ -187,3 +187,40 @@ Return ONLY valid JSON.
 `;
 };
 
+// ─── Quiz Generation Prompts ────────────────────────────────────────────────
+
+/**
+ * Build a prompt to generate a multiple choice quiz.
+ * Uses Groq JSON mode.
+ * @param {string} topic - The topic to test (e.g., "React.js Hooks")
+ * @param {string} difficulty - "beginner", "intermediate", or "advanced"
+ * @param {number} numQuestions - Number of questions to generate
+ */
+export const buildQuizGenerationPrompt = (topic, difficulty = "beginner", numQuestions = 5) => {
+  return `
+You are an expert educator and assessment creator.
+Create a ${numQuestions}-question multiple-choice quiz on the topic: "${topic}".
+The difficulty level should be strictly: ${difficulty}.
+
+Return ONLY valid JSON matching this exact schema:
+{
+  "title": "A catchy title for the quiz (e.g. 'React Hooks Mastery')",
+  "topic": "${topic}",
+  "difficulty": "${difficulty}",
+  "questions": [
+    {
+      "questionText": "The actual question",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctAnswer": "The exact string from options that is correct",
+      "explanation": "A 1-2 sentence explanation of why this answer is correct"
+    }
+  ]
+}
+
+Make sure the questions are highly relevant, unambiguous, and there is exactly one correct answer per question.
+The options array must contain exactly 4 distinct choices.
+The correctAnswer MUST exactly match one of the strings in the options array.
+Return ONLY valid JSON.
+`;
+};
+

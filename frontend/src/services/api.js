@@ -60,3 +60,11 @@ export const resourceApi = {
   recommend: (payload) => request('POST', '/resources/recommend', payload),
   incrementViews: (id) => request('PATCH', `/resources/${id}`, { views: 1 }),
 };
+
+export const quizApi = {
+  generate: (payload) => request('POST', '/quizzes/generate', payload),
+  getAll: (page = 1, limit = 10) => request('GET', `/quizzes?page=${page}&limit=${limit}`),
+  getById: (id) => request('GET', `/quizzes/${id}`),
+  submit: (id, answers) => request('POST', `/quizzes/${id}/submit`, { answers }),
+  delete: (id) => request('DELETE', `/quizzes/${id}`),
+};

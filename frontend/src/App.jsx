@@ -9,6 +9,7 @@ import Materials from './pages/Materials';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Quizzes from './pages/Quizzes';
 import { useAuth } from './context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -110,6 +111,8 @@ const App = () => {
               />
             ) : activeTab === 'Materials' ? (
               <Materials user={user} />
+            ) : activeTab === 'Quizzes' ? (
+              <Quizzes user={user} />
             ) : (
               <div className="flex h-64 items-center justify-center rounded-xl border border-[#ebebeb] dark:border-[#1e1e1e] bg-white dark:bg-[#141414]">
                 <div className="text-center">

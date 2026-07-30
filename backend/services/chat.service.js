@@ -1,6 +1,11 @@
 import Chat from "../models/Chat.js";
+import User from "../models/User.js";
 import { getGroqClient, GROQ_MODEL } from "../config/groq.js";
 import { buildChatContextPrompt, buildGroqMessages } from "../utils/prompts.js";
+import { passivelyUpdateProfile } from "./user.service.js";
+
+// Trigger passive profile extraction every N user messages
+const PASSIVE_EXTRACTION_INTERVAL = 10; // every 10 messages (5 exchanges)
 
 /**
  * Create a new chat session for the user.
@@ -60,11 +65,12 @@ export const getChatById = async (chatId, userId) => {
 };
 
 /**
- * Send a message in a chat session and get an AI response via Groq.
- * Maintains multi-turn conversation context from the stored history.
+ * Send a message and get an AI response via Groq.
+ * - Loads user preferences to personalize the system prompt.
+ * - After every PASSIVE_EXTRACTION_INTERVAL messages, passively updates the user profile.
  */
 export const sendMessage = async (chatId, userId, userMessage) => {
-  // 1. Load the chat session
+  // 1. Load chat session
   const chat = await Chat.findOne({ _id: chatId, userId, isArchived: false });
   if (!chat) {
     const error = new Error("Chat session not found");
@@ -81,14 +87,18 @@ export const sendMessage = async (chatId, userId, userMessage) => {
 
   const trimmedMessage = userMessage.trim();
 
-  // 3. Build system prompt with optional topic context
-  const systemPrompt = buildChatContextPrompt(chat.topic);
+  // 3. Load user preferences to personalize the system prompt
+  const user = await User.findById(userId).select("preferences");
+  const preferences = user?.preferences || null;
 
-  // 4. Build full message array: [system, ...history, new user message]
+  // 4. Build personalized system prompt
+  const systemPrompt = buildChatContextPrompt(chat.topic, preferences);
+
+  // 5. Build messages for Groq: [system, ...history, new user message]
   const messagesForGroq = buildGroqMessages(chat.messages, systemPrompt);
   messagesForGroq.push({ role: "user", content: trimmedMessage });
 
-  // 5. Call Groq API
+  // 6. Call Groq API
   const groq = getGroqClient();
   const completion = await groq.chat.completions.create({
     model: GROQ_MODEL,
@@ -97,12 +107,23 @@ export const sendMessage = async (chatId, userId, userMessage) => {
     temperature: 0.7,
   });
 
-  const aiText = completion.choices[0]?.message?.content || "I could not generate a response. Please try again.";
+  const aiText =
+    completion.choices[0]?.message?.content ||
+    "I could not generate a response. Please try again.";
 
-  // 6. Save both user message and AI response to DB
+  // 7. Persist both messages to DB
   chat.messages.push({ role: "user", content: trimmedMessage });
   chat.messages.push({ role: "assistant", content: aiText });
   await chat.save();
+
+  // 8. Passive profile extraction — fire-and-forget every N messages
+  const totalMessages = chat.messages.length;
+  if (totalMessages % PASSIVE_EXTRACTION_INTERVAL === 0) {
+    // Non-blocking: don't await, don't block the response
+    passivelyUpdateProfile(userId, chat.messages, preferences || {}).catch(
+      (err) => console.warn("[Profile] Background extraction error:", err.message)
+    );
+  }
 
   return {
     chatId: chat._id.toString(),

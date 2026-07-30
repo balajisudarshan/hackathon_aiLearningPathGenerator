@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
+import userRoutes from "./routes/user.routes.js";
 import { swaggerUi, specs } from "./swagger.js";
 
 // Load environment variables
@@ -32,6 +33,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/user", userRoutes);
 
 // Health Check
 app.get("/", (req, res) => {

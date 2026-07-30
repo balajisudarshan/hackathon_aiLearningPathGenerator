@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Topbar from './components/Topbar';
 import Sidebar from './components/Sidebar';
+import OnboardingModal from './components/OnboardingModal';
 import Dashboard from './pages/Dashboard';
 import AIAssistant from './pages/AIAssistant';
 import Login from './pages/Login';
@@ -9,10 +10,23 @@ import { useAuth } from './context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 const App = () => {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, refreshUser } = useAuth();
   const [page, setPage] = useState('login'); // 'login' | 'register'
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('Dashboard');
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Auto-open onboarding if user has not completed or skipped it
+  useEffect(() => {
+    if (user) {
+      const pref = user.preferences || {};
+      if (!pref.onboardingCompleted && !pref.onboardingSkipped) {
+        setShowOnboarding(true);
+      } else {
+        setShowOnboarding(false);
+      }
+    }
+  }, [user]);
 
   // Session loading spinner
   if (loading) {
@@ -37,6 +51,21 @@ const App = () => {
         onToggleSidebar={() => setIsSidebarOpen(p => !p)}
         user={user}
         onLogout={logout}
+        onOpenOnboarding={() => setShowOnboarding(true)}
+      />
+
+      {/* Onboarding Modal */}
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        onComplete={(data) => {
+          setShowOnboarding(false);
+          if (data?.user) {
+            updateUser(data.user);
+          }
+          refreshUser();
+        }}
+        initialUser={user}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -57,7 +86,7 @@ const App = () => {
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           <div className="max-w-6xl mx-auto h-full">
             {activeTab === 'Dashboard' ? (
-              <Dashboard user={user} />
+              <Dashboard user={user} onOpenOnboarding={() => setShowOnboarding(true)} />
             ) : activeTab === 'AI Assistant' ? (
               <AIAssistant user={user} />
             ) : (

@@ -14,6 +14,18 @@ export const generateToken = (userId, email) => {
   return jwt.sign({ userId, email }, secret, { expiresIn: "7d" });
 };
 
+// Helper to format user payload
+const formatUserPayload = (user) => ({
+  id: user._id.toString(),
+  email: user.email,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  avatarUrl: user.avatarUrl,
+  preferences: user.preferences || {},
+  createdAt: user.createdAt,
+  updatedAt: user.updatedAt,
+});
+
 // Register Service
 export const registerUser = async ({ email, password, firstName, lastName }) => {
   const normalizedEmail = email.toLowerCase().trim();
@@ -40,15 +52,7 @@ export const registerUser = async ({ email, password, firstName, lastName }) => 
   const accessToken = generateToken(user._id.toString(), user.email);
 
   return {
-    user: {
-      id: user._id.toString(),
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      avatarUrl: user.avatarUrl,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    },
+    user: formatUserPayload(user),
     accessToken,
   };
 };
@@ -80,15 +84,7 @@ export const loginUser = async ({ email, password }) => {
   const accessToken = generateToken(user._id.toString(), user.email);
 
   return {
-    user: {
-      id: user._id.toString(),
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      avatarUrl: user.avatarUrl,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    },
+    user: formatUserPayload(user),
     accessToken,
   };
 };
@@ -145,15 +141,7 @@ export const googleAuthUser = async (credential) => {
   const accessToken = generateToken(user._id.toString(), user.email);
 
   return {
-    user: {
-      id: user._id.toString(),
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      avatarUrl: user.avatarUrl,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    },
+    user: formatUserPayload(user),
     accessToken,
   };
 };
@@ -168,13 +156,5 @@ export const getUserProfile = async (userId) => {
     throw error;
   }
 
-  return {
-    id: user._id.toString(),
-    email: user.email,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    avatarUrl: user.avatarUrl,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
-  };
+  return formatUserPayload(user);
 };

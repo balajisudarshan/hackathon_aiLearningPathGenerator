@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, GraduationCap, Bell, ChevronDown, Sun, Moon, LogOut } from 'lucide-react';
+import { Menu, GraduationCap, Bell, ChevronDown, Sun, Moon, LogOut, Target } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
-const Topbar = ({ onToggleSidebar, user, onLogout }) => {
+const Topbar = ({ onToggleSidebar, user, onLogout, onOpenOnboarding }) => {
   const { theme, toggleTheme } = useTheme();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
@@ -89,6 +89,19 @@ const Topbar = ({ onToggleSidebar, user, onLogout }) => {
               <p className="text-[11px] text-[#888] dark:text-[#666] truncate mt-0.5">
                 {fullEmail}
               </p>
+            </div>
+
+            <div className="p-1 space-y-0.5 border-b border-[#ebebeb] dark:border-[#1e1e1e]">
+              <button
+                onClick={() => {
+                  setShowDropdown(false);
+                  if (onOpenOnboarding) onOpenOnboarding();
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#333] dark:text-[#ccc] hover:bg-[#f5f5f5] dark:hover:bg-[#1a1a1a] rounded-lg transition-colors text-left"
+              >
+                <Target size={14} className="text-[#5438dc]" />
+                <span>Learning Goals</span>
+              </button>
             </div>
 
             <div className="p-1">

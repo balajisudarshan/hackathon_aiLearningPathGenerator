@@ -35,3 +35,10 @@ export const chatApi = {
   deleteChat: (chatId) => request('DELETE', `/chat/${chatId}`),
   updateChat: (chatId, payload) => request('PATCH', `/chat/${chatId}`, payload),
 };
+
+export const userApi = {
+  getProfile: () => request('GET', '/user/profile'),
+  updateProfile: (payload) => request('PUT', '/user/profile', payload),
+  skipOnboarding: () => request('POST', '/user/profile/skip-onboarding'),
+  extractProfile: (text) => request('POST', '/user/profile/extract', { text }),
+};

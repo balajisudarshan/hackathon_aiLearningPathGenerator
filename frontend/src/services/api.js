@@ -1,0 +1,37 @@
+// Central API base URL — reads from Vite env or falls back to localhost
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+const request = async (method, path, body) => {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include', // send/receive HTTP-only cookies
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    const err = new Error(data.message || 'Request failed');
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+};
+
+export const authApi = {
+  register: (payload) => request('POST', '/auth/register', payload),
+  login: (payload) => request('POST', '/auth/login', payload),
+  googleAuth: (credential) => request('POST', '/auth/google', { credential }),
+  logout: () => request('POST', '/auth/logout'),
+  me: () => request('GET', '/auth/me'),
+};
+
+export const chatApi = {
+  createChat: (payload) => request('POST', '/chat', payload),
+  getChats: () => request('GET', '/chat'),
+  getChatById: (chatId) => request('GET', `/chat/${chatId}`),
+  sendMessage: (chatId, message) => request('POST', `/chat/${chatId}/message`, { message }),
+  clearHistory: (chatId) => request('DELETE', `/chat/${chatId}/history`),
+  deleteChat: (chatId) => request('DELETE', `/chat/${chatId}`),
+  updateChat: (chatId, payload) => request('PATCH', `/chat/${chatId}`, payload),
+};

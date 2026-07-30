@@ -9,7 +9,9 @@ const StatCard = ({ title, value, sub, accent }) => (
   </div>
 );
 
-const Dashboard = () => {
+const Dashboard = ({ user }) => {
+  const name = user?.firstName || (user?.email ? user.email.split('@')[0] : 'User');
+
   const activities = [
     { id: 1, label: 'Completed Data Structures Basics', time: '2h ago', done: true },
     { id: 2, label: 'Quiz Score: 85%', time: '5h ago', done: true },
@@ -24,7 +26,7 @@ const Dashboard = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-[#111] dark:text-[#e5e5e5] tracking-tight">Good morning, John 👋</h1>
+        <h1 className="text-xl font-bold text-[#111] dark:text-[#e5e5e5] tracking-tight capitalize">Good morning, {name} 👋</h1>
         <p className="text-sm text-[#999] dark:text-[#555] mt-0.5">Here's where you left off.</p>
       </div>
 

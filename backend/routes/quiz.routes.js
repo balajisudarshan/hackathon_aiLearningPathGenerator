@@ -6,7 +6,7 @@ import {
   submitQuizController,
   deleteQuizController,
 } from "../controllers/quiz.controller.js";
-import { protect } from "../middleware/auth.middleware.js";
+import { authMiddleware } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
@@ -43,7 +43,7 @@ const router = express.Router();
  *       201:
  *         description: Quiz generated successfully
  */
-router.post("/generate", protect, generateQuizController);
+router.post("/generate", authMiddleware, generateQuizController);
 
 /**
  * @swagger
@@ -68,7 +68,7 @@ router.post("/generate", protect, generateQuizController);
  *       200:
  *         description: List of quizzes
  */
-router.get("/", protect, getUserQuizzesController);
+router.get("/", authMiddleware, getUserQuizzesController);
 
 /**
  * @swagger
@@ -88,7 +88,7 @@ router.get("/", protect, getUserQuizzesController);
  *       200:
  *         description: Quiz details
  */
-router.get("/:id", protect, getQuizByIdController);
+router.get("/:id", authMiddleware, getQuizByIdController);
 
 /**
  * @swagger
@@ -121,7 +121,7 @@ router.get("/:id", protect, getQuizByIdController);
  *       200:
  *         description: Quiz graded successfully
  */
-router.post("/:id/submit", protect, submitQuizController);
+router.post("/:id/submit", authMiddleware, submitQuizController);
 
 /**
  * @swagger
@@ -141,6 +141,6 @@ router.post("/:id/submit", protect, submitQuizController);
  *       200:
  *         description: Quiz deleted successfully
  */
-router.delete("/:id", protect, deleteQuizController);
+router.delete("/:id", authMiddleware, deleteQuizController);
 
 export default router;

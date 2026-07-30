@@ -126,7 +126,7 @@ router.post("/recommend", testRecommendationController);
  *                 type: string
  *               type:
  *                 type: string
- *                 enum: [video, article, documentation, course, github, practice]
+ *                 enum: [video, article, documentation, course, github, practice, book]
  *               url:
  *                 type: string
  *               technology:

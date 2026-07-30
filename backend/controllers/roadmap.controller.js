@@ -48,10 +48,11 @@ export const generateRoadmapController = async (req, res) => {
  */
 export const getUserRoadmapsController = async (req, res) => {
   try {
-    const roadmaps = await getUserRoadmaps(req.user.userId);
+    const { page = 1, limit = 10 } = req.query;
+    const result = await getUserRoadmaps(req.user.userId, page, limit);
     return res.status(200).json({
       success: true,
-      roadmaps,
+      ...result,
     });
   } catch (error) {
     console.error("Error in getUserRoadmapsController:", error);

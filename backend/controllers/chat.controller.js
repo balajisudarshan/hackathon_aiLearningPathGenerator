@@ -44,11 +44,12 @@ export const createChatController = async (req, res) => {
  */
 export const getUserChatsController = async (req, res) => {
   try {
-    const chats = await getUserChats(req.user.userId);
+    const { page = 1, limit = 10 } = req.query;
+    const result = await getUserChats(req.user.userId, page, limit);
 
     return res.status(200).json({
       success: true,
-      chats,
+      ...result,
     });
   } catch (error) {
     console.error("Error in getUserChatsController:", error);

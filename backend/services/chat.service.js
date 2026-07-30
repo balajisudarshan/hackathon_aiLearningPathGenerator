@@ -21,20 +21,30 @@ export const createChatSession = async (userId, { title, topic } = {}) => {
 };
 
 /**
- * Get all chat sessions for a user (excluding archived, without messages).
+ * Get all chat sessions for a user (excluding archived, without messages) with pagination.
  */
-export const getUserChats = async (userId) => {
+export const getUserChats = async (userId, page = 1, limit = 10) => {
+  const skip = (page - 1) * limit;
   const chats = await Chat.find({ userId, isArchived: false })
     .select("_id title topic createdAt updatedAt")
-    .sort({ updatedAt: -1 });
+    .sort({ updatedAt: -1 })
+    .skip(skip)
+    .limit(parseInt(limit));
 
-  return chats.map((c) => ({
-    id: c._id.toString(),
-    title: c.title,
-    topic: c.topic,
-    createdAt: c.createdAt,
-    updatedAt: c.updatedAt,
-  }));
+  const total = await Chat.countDocuments({ userId, isArchived: false });
+
+  return {
+    chats: chats.map((c) => ({
+      id: c._id.toString(),
+      title: c.title,
+      topic: c.topic,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+    })),
+    total,
+    page: parseInt(page),
+    totalPages: Math.ceil(total / limit),
+  };
 };
 
 /**
